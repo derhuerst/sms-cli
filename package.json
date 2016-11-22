@@ -1,0 +1,18 @@
+{
+	"name":         "sms-cli",
+	"description":  "Read & write SMS from the command line.",
+	"version":      "0.1.0",
+	"main":         "index.js",
+	"files":        ["index.js", "bin.js"],
+	"bin":          {"sms": "./bin.js"},
+	"author":       "Jannis R <mail@jannisr.de>",
+	"homepage":     "https://github.com/derhuerst/sms-cli",
+	"repository":   "derhuerst/sms-cli",
+	"bugs":         "https://github.com/derhuerst/sms-cli/issues",
+	"license":      "ISC",
+	"preferGlobal": true,
+	"engines" :     {"node": ">=6"},
+	"keywords": [
+		"sms", "message", "text", "cli", "command line", "twilio"
+	]
+}
