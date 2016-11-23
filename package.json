@@ -14,5 +14,11 @@
 	"engines" :     {"node": ">=6"},
 	"keywords": [
 		"sms", "message", "text", "cli", "command line", "twilio"
-	]
+	],
+	"dependencies": {
+		"twilio": "^2.11.1",
+		"yargs": "^6.4",
+		"cli-table2": "^0.2",
+		"ms": "^0.7.2"
+	}
 }
