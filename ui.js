@@ -7,6 +7,9 @@ const ms = require('ms')
 const esc = require('ansi-escapes')
 const wrap = require('prompt-skeleton')
 const figures = require('figures')
+const childProcess = require('child_process')
+const tmp = require('tmp')
+const fs = require('fs')
 
 
 
@@ -23,6 +26,38 @@ const table = () => new Table({
 const newline = /(\n|\r\n|\r)/
 
 const height = (str) => (str.match(newline) || []).length + 1
+
+const spawn = (cmd, args, stdin, stdout) => new Promise((yay, nay) => {
+	const proc = childProcess.spawn(cmd, args, {
+		stdio: [stdin, stdout, 'ignore']
+	})
+	proc.on('close', (code) => {
+		if (code === 0) yay()
+		else nay()
+	})
+	proc.on('error', () => yay())
+})
+
+const tmpFile = () => new Promise((yay, nay) => {
+	tmp.tmpName((err, path) => {
+		if (err) nay(err)
+		else yay(path)
+	})
+})
+
+const readFile = (path) => new Promise((yay, nay) => {
+	fs.stat(path, (err, stats) => {
+		if (err) {
+			if (err.code === 'ENOENT') return yay(null)
+			return nay(err)
+		}
+		if (!stats.isFile()) return yay(null)
+		fs.readFile(path, 'utf8', (err, data) => {
+			if (err) return nay(err)
+			yay(data)
+		})
+	})
+})
 
 
 
@@ -67,7 +102,40 @@ const UI = {
 		this.render()
 	},
 
+	clear: function () {
+		this.out.write(esc.eraseScreen + esc.cursorTo(0, 0))
+	},
+	_: function (c) {
+		if (c !== 'c') return this.bell()
+		if (this.composing) return this.bell()
+
+		this.composing = true
+		this.pause()
+		this.clear()
+		const self = this
+		const resume = () => {
+			self.clear()
+			self.resume()
+			self.composing = false
+			self.render()
+		}
+
+		tmpFile()
+		.then((file) => {
+			const cmd = (process.env.EDITOR || 'nano')
+			return spawn(cmd, [file], process.stdin, process.stdout)
+			.then(() => readFile(file))
+		})
+		.then((text) => {
+			if (!text) return resume()
+			self.out.write('todo: send the message.')
+			setTimeout(resume, 2000)
+		})
+		.catch(resume)
+	},
+
 	render: function (first) {
+		if (this.composing) return
 		if (first) this.out.write(esc.cursorHide)
 		else this.out.write(esc.eraseLines(this.height))
 
@@ -115,9 +183,10 @@ const UI = {
 
 const defaults = {
 	  messages: []
+	, message: null
 	, cursor:  0
 
-	, selected: null
+	, composing: false
 	, height: 0
 
 	, error: null
