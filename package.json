@@ -16,6 +16,9 @@
 		"sms", "message", "text", "cli", "command line", "twilio"
 	],
 	"dependencies": {
+		"prompt-skeleton": "^0.2.0",
+		"ansi-escapes": "^1.4",
+		"figures": "^2",
 		"twilio": "^2.11.1",
 		"yargs": "^6.4",
 		"chalk": "^1.1.3",

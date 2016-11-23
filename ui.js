@@ -20,36 +20,54 @@ const table = () => new Table({
 	style: {'padding-left': 1, 'padding-right': 0}
 })
 
+const newline = /(\n|\r\n|\r)/
+
+const height = (str) => (str.match(newline) || []).length + 1
+
 
 
 const UI = {
+	moveCursor: function (n) {
+		this.cursor = n
+		if (this.message) this.message = this.messages[cursor]
+	},
+
 	abort: function () {
-		this.out.write('\n')
-		this.close()
+		if (this.message) {
+			this.message = null
+			this.render()
+		} else {
+			this.out.write('\n')
+			this.close()
+		}
+	},
+	submit: function () {
+		if (this.message) return this.bell()
+		this.message = this.messages[this.cursor]
+		this.render()
 	},
 
 	first: function () {
-		this.cursor = 0
+		this.moveCursor(0)
 		this.render()
 	},
 	last: function () {
-		this.cursor = this.messages.length - 1
+		this.moveCursor(this.messages.length - 1)
 		this.render()
 	},
 
 	up: function () {
 		if (this.cursor === 0) return this.bell()
-		this.cursor = this.cursor - 1
+		this.moveCursor(this.cursor - 1)
 		this.render()
 	},
 	down: function () {
 		if (this.cursor === (this.messages.length - 1)) return this.bell()
-		this.cursor = this.cursor + 1
+		this.moveCursor(this.cursor + 1)
 		this.render()
 	},
 
 	render: function (first) {
-		console.error('first', first)
 		if (first) this.out.write(esc.cursorHide)
 		else this.out.write(esc.eraseLines(this.height))
 
@@ -63,6 +81,17 @@ const UI = {
 			this.height = 1
 			return
 		}
+		if (this.message) {
+			this.out.write(
+				  ms(Date.now() - this.message.when) + ' ago'
+				+ ' '
+				+ this.message.to
+				+ '\n'
+				+ this.message.text
+			)
+			this.height = height(this.message.text) + 1
+			return
+		}
 
 		this.height = 0
 		const out = table()
@@ -70,7 +99,7 @@ const UI = {
 		for (let message of this.messages) {
 			out.push([
 				i === this.cursor ? figures.play : ' ',
-				ms(Date.now() - message.when),
+				ms(Date.now() - message.when) + ' ago',
 				message.to,
 				message.text.slice(0, 30)
 			])
@@ -88,6 +117,7 @@ const defaults = {
 	  messages: []
 	, cursor:  0
 
+	, selected: null
 	, height: 0
 
 	, error: null
