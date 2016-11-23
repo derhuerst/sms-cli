@@ -33,4 +33,3 @@ if (!process.env.TWILIO_TOKEN) {
 }
 
 ui(sms(process.env.TWILIO_SID, process.env.TWILIO_TOKEN))
-.catch(showError)
