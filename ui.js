@@ -64,7 +64,7 @@ const readFile = (path) => new Promise((yay, nay) => {
 const UI = {
 	moveCursor: function (n) {
 		this.cursor = n
-		if (this.message) this.message = this.messages[cursor]
+		if (this.message) this.message = this.messages[this.cursor]
 	},
 
 	abort: function () {
@@ -102,80 +102,94 @@ const UI = {
 		this.render()
 	},
 
-	clear: function () {
-		this.out.write(esc.eraseScreen + esc.cursorTo(0, 0))
-	},
-	_: function (c) {
-		if (c !== 'c') return this.bell()
-		if (this.composing) return this.bell()
-
-		this.composing = true
-		this.pause()
-		this.clear()
+	query: function () {
 		const self = this
+		const clear = () => {
+			self.out.write(esc.eraseScreen + esc.cursorTo(0, 0))
+		}
 		const resume = () => {
-			self.clear()
+			clear()
 			self.resume()
-			self.composing = false
+			self.querying = false
 			self.render()
 		}
+		this.querying = true
+		this.pause()
+		clear()
 
-		tmpFile()
+		return tmpFile()
 		.then((file) => {
 			const cmd = (process.env.EDITOR || 'nano')
 			return spawn(cmd, [file], process.stdin, process.stdout)
 			.then(() => readFile(file))
 		})
-		.then((text) => {
-			if (!text) return resume()
-			self.out.write('todo: send the message.')
-			setTimeout(resume, 2000)
-		})
-		.catch(resume)
+		.then((text) => [text, resume])
+		.catch((err) => [null, resume])
 	},
 
-	render: function (first) {
-		if (this.composing) return
-		if (first) this.out.write(esc.cursorHide)
-		else this.out.write(esc.eraseLines(this.height))
+	_: function (c) {
+		if (c !== 'c') return this.bell()
+		if (this.querying) return this.bell()
 
-		if (this.error) {
-			this.out.write(chalk.red(this.error))
-			this.height = 1
-			return
-		}
-		if (this.messages.length === 0) {
-			this.out.write(chalk.gray('no messages'))
-			this.height = 1
-			return
-		}
-		if (this.message) {
-			this.out.write(
-				  ms(Date.now() - this.message.when) + ' ago'
-				+ ' '
-				+ this.message.to
-				+ '\n'
-				+ this.message.text
-			)
-			this.height = height(this.message.text) + 1
-			return
-		}
+		this.query()
+		.then(([text, resume]) => {
+			this.out.write('todo: send the following message:\n' + text)
+			this.height = 1 + height(text)
+			setTimeout(resume, 2000)
+		})
+	},
 
-		this.height = 0
+	renderError: function () {
+		return chalk.red(this.error)
+	},
+
+	renderNoMessages: function () {
+		return chalk.gray('no messages')
+	},
+
+	renderMessage: function () {
+		let out = ''
+		const message = this.message
+		out += chalk.gray(ms(Date.now() - message.when) + ' ago')
+		out += ' '
+		out += chalk.yellow(message.to)
+		out += '\n'
+		out += this.message.text
+		return out
+	},
+
+	renderMessages: function () {
 		const out = table()
 		let i = 0
 		for (let message of this.messages) {
 			out.push([
-				i === this.cursor ? figures.play : ' ',
-				ms(Date.now() - message.when) + ' ago',
-				message.to,
+				i === this.cursor ? chalk.cyan(figures.play) : ' ',
+				chalk.gray(ms(Date.now() - message.when) + ' ago'),
+				chalk.yellow(message.to),
 				message.text.slice(0, 30)
 			])
-			this.height++
 			i++
 		}
+		return out.toString()
+	},
 
-		this.out.write(out.toString())
+	render: function (first) {
+		if (this.querying) return
+		if (first) this.out.write(esc.cursorHide)
+		else this.out.write(esc.eraseLines(this.height))
+
+		let out
+		if (this.error) {
+			out = this.renderNoMessages()
+		} else if (this.messages.length === 0) {
+			out = this.renderNoMessages()
+		} else if (this.message) {
+			out = this.renderMessage()
+		} else {
+			out = this.renderMessages()
+		}
+		this.height = height(out)
+		this.out.write(out)
 	}
 }
 
@@ -186,7 +200,7 @@ const defaults = {
 	, message: null
 	, cursor:  0
 
-	, composing: false
+	, querying: false
 	, height: 0
 
 	, error: null
