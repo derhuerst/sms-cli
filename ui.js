@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 
-// const chalk = require('chalk')
+const chalk = require('chalk')
 const Table = require('cli-table2')
 const ms = require('ms')
 const esc = require('ansi-escapes')
 const wrap = require('prompt-skeleton')
-// const figures = require('figures')
-// const so = require('so')
+const figures = require('figures')
 
 
 
@@ -20,18 +19,6 @@ const table = () => new Table({
 	},
 	style: {'padding-left': 1, 'padding-right': 0}
 })
-
-// const renderMessages = (messages) => {
-// 	const out = table()
-// 	for (let message of messages) {
-// 		out.push([
-// 			ms(Date.now() - message.when),
-// 			message.to,
-// 			message.text.slice(0, 30)
-// 		])
-// 	}
-// 	return out.toString() + '\n'
-// }
 
 
 
@@ -62,16 +49,33 @@ const UI = {
 	},
 
 	render: function (first) {
+		console.error('first', first)
 		if (first) this.out.write(esc.cursorHide)
-		else this.out.write(esc.eraseLines(this.messages.length + 1))
+		else this.out.write(esc.eraseLines(this.height))
 
-		if (this.error) return this.out.write(chalk.red(this.error) + '\n')
+		if (this.error) {
+			this.out.write(chalk.red(this.error))
+			this.height = 1
+			return
+		}
+		if (this.messages.length === 0) {
+			this.out.write(chalk.gray('no messages'))
+			this.height = 1
+			return
+		}
 
+		this.height = 0
 		const out = table()
+		let i = 0
 		for (let message of this.messages) {
-			ms(Date.now() - message.when),
-			message.to,
-			message.text.slice(0, 30)
+			out.push([
+				i === this.cursor ? figures.play : ' ',
+				ms(Date.now() - message.when),
+				message.to,
+				message.text.slice(0, 30)
+			])
+			this.height++
+			i++
 		}
 
 		this.out.write(out.toString())
@@ -84,6 +88,8 @@ const defaults = {
 	  messages: []
 	, cursor:  0
 
+	, height: 0
+
 	, error: null
 }
 
@@ -95,6 +101,7 @@ const ui = (client, opt) => {
 	client.list()
 	.then((messages) => {
 		ui.messages = messages
+		ui.render()
 	})
 	.catch((err) => {
 		ui.error = err.message
