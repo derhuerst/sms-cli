@@ -10,54 +10,11 @@ const figures = require('figures')
 const childProcess = require('child_process')
 const tmp = require('tmp')
 const fs = require('fs')
+const trim = require('trim-newlines')
 
-
-
-const table = () => new Table({
-	chars: {
-		top:    '', 'top-mid':    '', 'top-left':    '', 'top-right':    '',
-		bottom: '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
-		left:   '', 'left-mid':   '',  mid:          '', 'mid-mid':      '',
-		right:  '', 'right-mid':  '',  middle:       ' '
-	},
-	style: {'padding-left': 1, 'padding-right': 0}
-})
-
-const newline = /(\n|\r\n|\r)/
-
-const height = (str) => (str.match(newline) || []).length + 1
-
-const spawn = (cmd, args, stdin, stdout) => new Promise((yay, nay) => {
-	const proc = childProcess.spawn(cmd, args, {
-		stdio: [stdin, stdout, 'ignore']
-	})
-	proc.on('close', (code) => {
-		if (code === 0) yay()
-		else nay()
-	})
-	proc.on('error', () => yay())
-})
-
-const tmpFile = () => new Promise((yay, nay) => {
-	tmp.tmpName((err, path) => {
-		if (err) nay(err)
-		else yay(path)
-	})
-})
-
-const readFile = (path) => new Promise((yay, nay) => {
-	fs.stat(path, (err, stats) => {
-		if (err) {
-			if (err.code === 'ENOENT') return yay(null)
-			return nay(err)
-		}
-		if (!stats.isFile()) return yay(null)
-		fs.readFile(path, 'utf8', (err, data) => {
-			if (err) return nay(err)
-			yay(data)
-		})
-	})
-})
+const {
+	table, newline, height, spawn, tmpFile, readFile, writeFile
+} = require('./util')
 
 
 
@@ -102,7 +59,7 @@ const UI = {
 		this.render()
 	},
 
-	query: function () {
+	query: function (message) {
 		const self = this
 		const clear = () => {
 			self.out.write(esc.eraseScreen + esc.cursorTo(0, 0))
@@ -120,23 +77,43 @@ const UI = {
 		return tmpFile()
 		.then((file) => {
 			const cmd = (process.env.EDITOR || 'nano')
-			return spawn(cmd, [file], process.stdin, process.stdout)
+			return writeFile(file, '# ' + message)
+			.then(() => spawn(cmd, [file], process.stdin, process.stdout))
 			.then(() => readFile(file))
 		})
-		.then((text) => [text, resume])
+		.then((text) => {
+			text = text.split(newline)
+			if (text[0].slice(0, 1) === '#') text = text.slice(1)
+			text = trim(text.join('\n'))
+			return [text, resume]
+		})
 		.catch((err) => [null, resume])
 	},
 
-	_: function (c) {
-		if (c !== 'c') return this.bell()
+	_: function (key) {
 		if (this.querying) return this.bell()
 
-		this.query()
-		.then(([text, resume]) => {
-			this.out.write('todo: send the following message:\n' + text)
-			this.height = 1 + height(text)
-			setTimeout(resume, 2000)
-		})
+		if (key === 'r') {
+			const to = this.messages[this.cursor].to
+			this.query('Please enter a message. This line will be ignored.')
+			.then(([text, resume]) => {
+				this.out.write(`todo: send the following message to ${to}:\n` + text)
+				this.height = 1 + height(text)
+				setTimeout(resume, 2000)
+			})
+
+		} else if (key === 'c') {
+			this.query('Please enter a message. This line will be ignored.')
+			.then(([text, resume]) => {
+				this.query('Please enter a phone number.')
+				.then(([to]) => {
+					this.out.write(`todo: send the following message to ${to}:\n` + text)
+					this.height = 1 + height(text)
+					setTimeout(resume, 2000)
+				})
+			})
+
+		} else return this.bell()
 	},
 
 	renderError: function () {
