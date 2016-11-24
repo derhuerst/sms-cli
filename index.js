@@ -16,6 +16,7 @@ const sms = (sid, token) => {
 
 		, send: (from, to, text) =>
 			client.sms.messages.post({from, to, body: text})
+			.then((message) => message.sid)
 
 		, list: () =>
 			client.sms.messages.list().then((data) =>
@@ -25,7 +26,8 @@ const sms = (sid, token) => {
 					from: message.from,
 					to: message.to,
 					text: message.body,
-					outbound: message.direction.slice(0, 7) === 'inbound'
+					inbound: message.direction.slice(0, 7) === 'inbound',
+					outbound: message.direction.slice(0, 8) === 'outbound'
 				}))
 			)
 	}

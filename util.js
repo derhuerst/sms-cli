@@ -21,7 +21,9 @@ const table = () => new Table({
 
 const newline = /(\n|\r\n|\r)/
 
-const height = (str) => (str.match(newline) || []).length + 1
+const height = (str) => {
+	return str.split(newline).length
+}
 
 const spawn = (cmd, args, stdin, stdout) => new Promise((yay, nay) => {
 	const proc = childProcess.spawn(cmd, args, {

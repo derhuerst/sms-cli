@@ -130,6 +130,8 @@ const UI = {
 		out += chalk.gray(ms(Date.now() - message.when) + ' ago')
 		out += ' '
 		out += chalk.yellow(message.to)
+		out += ' '
+		out += message.inbound ? chalk.blue('in') : chalk.red('out'),
 		out += '\n'
 		out += this.message.text
 		return out
@@ -139,11 +141,12 @@ const UI = {
 		const out = table()
 		let i = 0
 		for (let message of this.messages) {
+			const text = message.text.slice(0, 30)
 			out.push([
-				i === this.cursor ? chalk.cyan(figures.play) : ' ',
 				chalk.gray(ms(Date.now() - message.when) + ' ago'),
 				chalk.yellow(message.to),
-				message.text.slice(0, 30)
+				message.inbound ? chalk.blue('in') : chalk.red('out'),
+				i === this.cursor ? chalk.cyan(text) : text
 			])
 			i++
 		}
@@ -157,7 +160,7 @@ const UI = {
 
 		let out
 		if (this.error) {
-			out = this.renderNoMessages()
+			out = this.renderError()
 		} else if (this.messages.length === 0) {
 			out = this.renderNoMessages()
 		} else if (this.message) {
@@ -190,7 +193,7 @@ const ui = (client, opt) => {
 
 	client.list()
 	.then((messages) => {
-		ui.messages = messages
+		ui.messages = messages.sort((m1, m2) => m2.when - m1.when)
 		ui.render()
 	})
 	.catch((err) => {
