@@ -11,9 +11,10 @@ const childProcess = require('child_process')
 const tmp = require('tmp')
 const fs = require('fs')
 const trim = require('trim-newlines')
+const { width, height } = require('window-size')
 
 const {
-	table, newline, height, spawn, tmpFile, readFile, writeFile
+	table, newline, spawn, tmpFile, readFile, writeFile
 } = require('./util')
 
 
@@ -98,7 +99,6 @@ const UI = {
 			this.query('Please enter a message. This line will be ignored.')
 			.then(([text, resume]) => {
 				this.out.write(`todo: send the following message to ${to}:\n` + text)
-				this.height = 1 + height(text)
 				setTimeout(resume, 2000)
 			})
 
@@ -108,7 +108,6 @@ const UI = {
 				this.query('Please enter a phone number.')
 				.then(([to]) => {
 					this.out.write(`todo: send the following message to ${to}:\n` + text)
-					this.height = 1 + height(text)
 					setTimeout(resume, 2000)
 				})
 			})
@@ -116,12 +115,14 @@ const UI = {
 		} else return this.bell()
 	},
 
-	renderError: function () {
-		return chalk.red(this.error)
-	},
-
-	renderNoMessages: function () {
-		return chalk.gray('no messages')
+	renderStatus: function () {
+		return [
+			  this.loading ? figures.radioOn : figures.radioOff
+			, this.error ? chalk.red(this.error) : ''
+			, chalk.gray([
+				'no messages', '1 message'
+			][this.messages.length] || `${this.messages.length} messages`)
+		].join(' ')
 	},
 
 	renderMessage: function () {
@@ -129,7 +130,7 @@ const UI = {
 		const message = this.message
 		out += chalk.gray(ms(Date.now() - message.when) + ' ago')
 		out += ' '
-		out += chalk.yellow(message.to)
+		out += chalk.yellow(message.outbound ? message.to : message.from)
 		out += ' '
 		out += message.inbound ? chalk.blue('in') : chalk.red('out'),
 		out += '\n'
@@ -138,13 +139,13 @@ const UI = {
 	},
 
 	renderMessages: function () {
-		const out = table()
+		const out = table([7, 15, 3, width - 7 - 15 - 3])
 		let i = 0
 		for (let message of this.messages) {
-			const text = message.text.slice(0, 30)
+			const text = message.text
 			out.push([
 				chalk.gray(ms(Date.now() - message.when) + ' ago'),
-				chalk.yellow(message.to),
+				chalk.yellow(message.outbound ? message.to : message.from),
 				message.inbound ? chalk.blue('in') : chalk.red('out'),
 				i === this.cursor ? chalk.cyan(text) : text
 			])
@@ -154,22 +155,20 @@ const UI = {
 	},
 
 	render: function (first) {
+		if (first) this.out.write('\n'.repeat(height))
 		if (this.querying) return
-		if (first) this.out.write(esc.cursorHide)
-		else this.out.write(esc.eraseLines(this.height))
 
-		let out
-		if (this.error) {
-			out = this.renderError()
-		} else if (this.messages.length === 0) {
-			out = this.renderNoMessages()
+		let out = esc.clearScreen + esc.cursorTo(0, 0)
+			+ this.renderStatus() + '\n'
+
+		if (this.messages.length === 0) {
 		} else if (this.message) {
-			out = this.renderMessage()
+			out += this.renderMessage()
 		} else {
-			out = this.renderMessages()
+			out += this.renderMessages()
 		}
-		this.height = height(out)
-		this.out.write(out)
+
+		this.out.write(out + esc.cursorHide)
 	}
 }
 
@@ -181,7 +180,6 @@ const defaults = {
 	, cursor:  0
 
 	, querying: false
-	, height: 0
 
 	, error: null
 }
@@ -190,17 +188,23 @@ const ui = (client, opt) => {
 	if (Array.isArray(opt) || 'object' !== typeof opt) opt = {}
 
 	const ui = Object.assign(Object.create(UI), defaults, opt)
+	const result = wrap(ui)
 
+	ui.loading = true
+	ui.render()
 	client.list()
 	.then((messages) => {
+		ui.loading = false
 		ui.messages = messages.sort((m1, m2) => m2.when - m1.when)
 		ui.render()
 	})
 	.catch((err) => {
+		ui.loading = false
 		ui.error = err.message
+		ui.render()
 	})
 
-	return wrap(ui)
+	return result
 }
 
 module.exports = ui

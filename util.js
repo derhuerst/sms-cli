@@ -9,21 +9,18 @@ const trim = require('trim-newlines')
 
 
 
-const table = () => new Table({
+const table = (cols = []) => new Table({
 	chars: {
 		top:    '', 'top-mid':    '', 'top-left':    '', 'top-right':    '',
 		bottom: '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
 		left:   '', 'left-mid':   '',  mid:          '', 'mid-mid':      '',
 		right:  '', 'right-mid':  '',  middle:       ' '
 	},
-	style: {'padding-left': 1, 'padding-right': 0}
+	style: {'padding-left': 0, 'padding-right': 0},
+	colWidths: cols, wordWrap: true
 })
 
 const newline = /(\n|\r\n|\r)/
-
-const height = (str) => {
-	return str.split(newline).length
-}
 
 const spawn = (cmd, args, stdin, stdout) => new Promise((yay, nay) => {
 	const proc = childProcess.spawn(cmd, args, {
@@ -66,4 +63,4 @@ const writeFile = (path, data) => new Promise((yay, nay) => {
 
 
 
-module.exports = {table, newline, height, spawn, tmpFile, readFile, writeFile}
+module.exports = {table, newline, spawn, tmpFile, readFile, writeFile}
