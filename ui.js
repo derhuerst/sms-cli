@@ -116,13 +116,12 @@ const UI = {
 	},
 
 	renderStatus: function () {
+		const l = this.messages.length
 		return [
 			  this.loading ? figures.radioOn : figures.radioOff
-			, this.error ? chalk.red(this.error) : ''
-			, chalk.gray([
-				'no messages', '1 message'
-			][this.messages.length] || `${this.messages.length} messages`)
-		].join(' ')
+			, this.error ? chalk.red(this.error) : null
+			, chalk.gray(['no messages', '1 message'][l] || `${l} messages`)
+		].filter((s) => !!s).join(' ')
 	},
 
 	renderMessage: function () {
@@ -135,23 +134,34 @@ const UI = {
 		out += message.inbound ? chalk.blue('in') : chalk.red('out'),
 		out += '\n'
 		out += this.message.text
+		out += '\n'
 		return out
 	},
 
 	renderMessages: function () {
-		const out = table([7, 15, 3, width - 7 - 15 - 3])
+		const out = table([3, 15, 3, width - 3 - 15 - 3 - 3]) // columns + 3x padding of 1
 		let i = 0
 		for (let message of this.messages) {
-			const text = message.text
 			out.push([
-				chalk.gray(ms(Date.now() - message.when) + ' ago'),
+				chalk.gray(ms(Date.now() - message.when)),
 				chalk.yellow(message.outbound ? message.to : message.from),
 				message.inbound ? chalk.blue('in') : chalk.red('out'),
-				i === this.cursor ? chalk.cyan(text) : text
+				i === this.cursor ? chalk.cyan(message.text) : message.text
 			])
 			i++
 		}
 		return out.toString()
+	},
+
+	renderBindings: function () {
+		const out = [
+			this.message ? 'ctrl+D to go back' : 'ctrl+D to leave',
+			'C to compose'
+		]
+		if (!this.error) out.push(
+			this.messages.length > 0 ? 'R to reply' : ''
+		)
+		return chalk.gray(out.filter((s) => !!s).join(' | '))
 	},
 
 	render: function (first) {
@@ -168,6 +178,7 @@ const UI = {
 			out += this.renderMessages()
 		}
 
+		out += this.renderBindings()
 		this.out.write(out + esc.cursorHide)
 	}
 }

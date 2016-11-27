@@ -1,6 +1,7 @@
 'use strict'
 
 const twilio = require('twilio')
+const trim = require('trim-newlines')
 
 const sms = (sid, token) => {
 	const client = twilio(sid, token)
@@ -25,7 +26,7 @@ const sms = (sid, token) => {
 					when: message.dateSent,
 					from: message.from,
 					to: message.to,
-					text: message.body,
+					text: trim(message.body),
 					inbound: message.direction.slice(0, 7) === 'inbound',
 					outbound: message.direction.slice(0, 8) === 'outbound'
 				}))

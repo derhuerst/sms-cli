@@ -10,6 +10,7 @@ const trim = require('trim-newlines')
 
 
 const table = (cols = []) => new Table({
+	head: [],
 	chars: {
 		top:    '', 'top-mid':    '', 'top-left':    '', 'top-right':    '',
 		bottom: '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
