@@ -3,13 +3,29 @@
 
 const yargs = require('yargs')
 const chalk = require('chalk')
+const Conf = require('conf')
+const prompt = require('text-prompt')
 
 const sms = require('.')
 const ui = require('./ui')
 
 
 
+const showError = (msg) => {
+	process.stdout.write(chalk.red(msg) + '\n')
+}
+
+const query = (msg) =>
+	new Promise((resolve, reject) => {
+		prompt(msg)
+		.once('submit', resolve)
+		.once('abort', () => reject('You rejected the prompt.'))
+	})
+
+
+
 const argv = yargs.argv
+const conf = new Conf()
 
 if (argv.help || argv.h) {
 	process.stdout.write(`
@@ -19,17 +35,32 @@ Usage:
 	process.exit()
 }
 
-const showError = (msg) => {
-	process.stdout.write(chalk.red(msg) + '\n')
+
+
+let chain = Promise.resolve()
+
+if (!conf.get('sid')) {
+	if (process.env.TWILIO_SID) conf.set('sid', process.env.TWILIO_SID)
+	else chain = chain.then(
+		query('Please enter your Twilio SID.')
+		.then((sid) => {
+			conf.set('sid', sid)
+		})
+	)
 }
 
-if (!process.env.TWILIO_SID) {
-	showError('Missing TWILIO_SID env variable.')
-	process.exit(1)
-}
-if (!process.env.TWILIO_TOKEN) {
-	showError('Missing TWILIO_TOKEN env variable.')
-	process.exit(1)
+if (!conf.get('token')) {
+	if (process.env.TWILIO_TOKEN) conf.set('token', process.env.TWILIO_SID)
+	else chain = chain.then(
+		query('Please enter your Twilio token.')
+		.then((token) => {
+			conf.set('token', token)
+		})
+	)
 }
 
-ui(sms(process.env.TWILIO_SID, process.env.TWILIO_TOKEN))
+chain.then(() => {
+	const sid = conf.get('sid')
+	const token = conf.get('token')
+	ui(sms(sid, token))
+})
