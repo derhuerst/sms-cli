@@ -93,6 +93,7 @@ const UI = {
 
 	_: function (key) {
 		if (this.querying) return this.bell()
+		if (key === 'f') return this.fetch()
 
 		if (key === 'r') {
 			const to = this.messages[this.cursor].to
@@ -155,6 +156,7 @@ const UI = {
 
 	renderBindings: function () {
 		const out = [
+			'F to fetch',
 			this.message ? 'ctrl+D to go back' : 'ctrl+D to leave',
 			'C to compose'
 		]
@@ -201,20 +203,25 @@ const ui = (client, opt) => {
 	const ui = Object.assign(Object.create(UI), defaults, opt)
 	const result = wrap(ui)
 
-	ui.loading = true
-	ui.render()
-	client.list()
-	.then((messages) => {
-		ui.loading = false
-		ui.messages = messages.sort((m1, m2) => m2.when - m1.when)
+	const fetch = () => {
+		ui.loading = true
 		ui.render()
-	})
-	.catch((err) => {
-		ui.loading = false
-		ui.error = err.message
-		ui.render()
-	})
+		client.list()
+		.then((messages) => {
+			ui.loading = false
+			ui.messages = messages.sort((m1, m2) => m2.when - m1.when)
+			ui.render()
+		})
+		.catch((err) => {
+			ui.loading = false
+			ui.error = err.message
+			ui.render()
+		})
+	}
+	fetch()
 
+	ui.fetch = fetch
+	ui.send = client.send
 	return result
 }
 
