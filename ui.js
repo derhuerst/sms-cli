@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 'use strict'
 
 const chalk = require('chalk')
@@ -86,6 +85,7 @@ const UI = {
 			text = text.split(newline)
 			if (text[0].slice(0, 1) === '#') text = text.slice(1)
 			text = trim(text.join('\n'))
+			if (text.length === 0) text = null
 			return [text, resume]
 		})
 		.catch((err) => [null, resume])
@@ -135,7 +135,6 @@ const UI = {
 		out += message.inbound ? chalk.blue('in') : chalk.red('out'),
 		out += '\n'
 		out += this.message.text
-		out += '\n'
 		return out
 	},
 
@@ -180,7 +179,7 @@ const UI = {
 			out += this.renderMessages()
 		}
 
-		out += this.renderBindings()
+		out += '\n' + this.renderBindings()
 		this.out.write(out + esc.cursorHide)
 	}
 }

@@ -40,7 +40,7 @@ Usage:
 
 
 
-const chain = []
+const chain = [() => Promise.resolve()]
 let client
 
 if (!conf.get('sid')) {
