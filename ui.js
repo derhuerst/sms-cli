@@ -91,29 +91,55 @@ const UI = {
 		.catch((err) => [null, resume])
 	},
 
+	compose: function (receiver) {
+		const sender = this.number
+		let message
+		this.query('Please enter a message. This line will be ignored.')
+		.then(([text, resume]) => {
+			if (!text) {
+				this.error = 'Message is empty.'
+				return resume()
+			}
+			message = text
+
+			if (!receiver) return this.query('Enter a phone number.')
+			return [receiver, resume]
+		})
+		.then(([number, resume]) => {
+			if (!number) {
+				this.error = 'Invalid phone number.'
+				return resume()
+			}
+			receiver = number
+
+			resume()
+			this.loading = true
+			this.render()
+			this.send(sender, receiver, message)
+			.then(() => {
+				this.error = null
+				this.render()
+				this.fetch()
+			})
+			.catch((err) => {
+				this.loading = false
+				this.error = err.message
+				this.render()
+			})
+		})
+	},
+
 	_: function (key) {
 		if (this.querying) return this.bell()
 		if (key === 'f') return this.fetch()
 
 		if (key === 'r') {
-			const to = this.messages[this.cursor].to
-			this.query('Please enter a message. This line will be ignored.')
-			.then(([text, resume]) => {
-				this.out.write(`todo: send the following message to ${to}:\n` + text)
-				setTimeout(resume, 2000)
-			})
+			const message = this.messages[this.cursor]
+			return this.compose(message.outbound ? message.to : message.from)
+		}
+		if (key === 'c') return this.compose()
 
-		} else if (key === 'c') {
-			this.query('Please enter a message. This line will be ignored.')
-			.then(([text, resume]) => {
-				this.query('Please enter a phone number.')
-				.then(([to]) => {
-					this.out.write(`todo: send the following message to ${to}:\n` + text)
-					setTimeout(resume, 2000)
-				})
-			})
-
-		} else return this.bell()
+		return this.bell()
 	},
 
 	renderStatus: function () {
@@ -196,10 +222,11 @@ const defaults = {
 	, error: null
 }
 
-const ui = (client, opt) => {
+const ui = (client, number, opt) => {
 	if (Array.isArray(opt) || 'object' !== typeof opt) opt = {}
 
 	const ui = Object.assign(Object.create(UI), defaults, opt)
+	ui.number = number
 	const result = wrap(ui)
 
 	const fetch = () => {

@@ -85,5 +85,5 @@ if (!conf.get('number')) {
 }
 
 pipe(...chain)()
-.then(() => ui(client))
+.then(() => ui(client, conf.get('number')))
 .catch(showError)
