@@ -131,6 +131,10 @@ const UI = {
 
 	_: function (key) {
 		if (this.querying) return this.bell()
+
+		if (key === 'j') return this.down()
+		if (key === 'k') return this.up()
+
 		if (key === 'f') return this.fetch()
 
 		if (key === 'r') {
@@ -189,10 +193,11 @@ const UI = {
 		const out = [
 			'F to fetch',
 			this.message ? 'ctrl+D to go back' : 'ctrl+D to leave',
-			'C to compose'
+			'C to compose',
 		]
 		if (!this.error) out.push(
-			this.messages.length > 0 ? 'R to reply' : ''
+			this.messages.length > 0 ? 'R to reply' : '',
+			this.messages.length > 0 ? 'D to delete' : ''
 		)
 		return chalk.gray(out.filter((s) => !!s).join(' | '))
 	},
@@ -251,6 +256,7 @@ const ui = (client, number, opt) => {
 		})
 	}
 	fetch()
+	setInterval(fetch, 5 * 60 * 1000)
 
 	const remove = (id) => {
 		ui.loading = true
