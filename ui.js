@@ -139,6 +139,11 @@ const UI = {
 		}
 		if (key === 'c') return this.compose()
 
+		if (key === 'd') {
+			const message = this.message || this.messages[this.cursor]
+			return this.remove(message.id)
+		}
+
 		return this.bell()
 	},
 
@@ -148,6 +153,7 @@ const UI = {
 			  this.loading ? figures.radioOn : figures.radioOff
 			, this.error ? chalk.red(this.error) : null
 			, chalk.gray(['no messages', '1 message'][l] || `${l} messages`)
+			, chalk.gray(this.number)
 		].filter((s) => !!s).join(' ')
 	},
 
@@ -246,7 +252,25 @@ const ui = (client, number, opt) => {
 	}
 	fetch()
 
+	const remove = (id) => {
+		ui.loading = true
+		ui.render()
+		client.delete(id)
+		.then(() => {
+			ui.messages = ui.messages.filter((m) => m.id !== id)
+		})
+		.catch((err) => {
+			ui.error = err.message
+			ui.render()
+		})
+		.then(() => {
+			ui.loading = false
+			ui.render()
+		})
+	}
+
 	ui.fetch = fetch
+	ui.remove = remove
 	ui.send = client.send
 	return result
 }

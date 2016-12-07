@@ -31,6 +31,9 @@ const sms = (sid, token) => {
 					outbound: message.direction.slice(0, 8) === 'outbound'
 				}))
 			)
+
+		, delete: (id) =>
+			client.messages(id).delete()
 	}
 }
 
