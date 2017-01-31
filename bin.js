@@ -84,6 +84,11 @@ if (!conf.get('number')) {
 	)
 }
 
+if (argv.number || argv.n) {
+	process.stdout.write(conf.get('number') + '\n')
+	process.exit(0)
+}
+
 pipe(...chain)()
 .then(() => ui(client, conf.get('number')))
 .catch(showError)

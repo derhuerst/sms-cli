@@ -5,6 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/sms-cli.svg)](https://www.npmjs.com/package/sms-cli)
 [![dependency status](https://img.shields.io/david/derhuerst/sms-cli.svg)](https://david-dm.org/derhuerst/sms-cli)
 ![ISC-licensed](https://img.shields.io/github/license/derhuerst/sms-cli.svg)
+[![chat on gitter](https://badges.gitter.im/derhuerst.svg)](https://gitter.im/derhuerst)
 
 
 ## Installing
