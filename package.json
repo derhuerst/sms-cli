@@ -1,7 +1,7 @@
 {
 	"name":         "sms-cli",
 	"description":  "Read & write SMS from the command line.",
-	"version":      "0.1.0",
+	"version":      "0.1.1",
 	"main":         "index.js",
 	"files":        ["index.js", "ui.js", "util.js", "bin.js"],
 	"bin":          {"sms": "./bin.js"},
@@ -16,19 +16,19 @@
 		"sms", "message", "text", "cli", "command line", "twilio"
 	],
 	"dependencies": {
-		"prompt-skeleton": "^0.3.0",
-		"ansi-escapes": "^1.4",
-		"figures": "^2",
-		"tmp": "^0.0.31",
-		"trim-newlines": "^1",
-		"twilio": "^2.11.1",
-		"yargs": "^6.4",
+		"ansi-escapes": "^1.4.0",
 		"chalk": "^1.1.3",
-		"cli-table2": "^0.2",
-		"ms": "^0.7.2",
-		"text-prompt": "^0.1.1",
+		"cli-table2": "^0.2.0",
+		"conf": "^0.12.0",
+		"figures": "^2.0.0",
+		"p-pipe": "^1.0.0",
+		"prompt-skeleton": "^0.4.0",
 		"select-prompt": "^0.3.1",
-		"conf": "^0.11.2",
-		"p-pipe": "^1.0.0"
+		"text-prompt": "^0.1.1",
+		"tmp": "0.0.31",
+		"trim-newlines": "^1.0.0",
+		"twilio": "^2.11.1",
+		"window-size": "^0.3.0",
+		"yargs": "^6.6.0"
 	}
 }
