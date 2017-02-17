@@ -76,7 +76,7 @@ const UI = {
 
 		return tmpFile()
 		.then((file) => {
-			const cmd = (process.env.EDITOR || 'nano')
+			const cmd = process.env.EDITOR || (process.platform === 'win32' ? 'notepad.exe' : 'nano')
 			return writeFile(file, '# ' + message)
 			.then(() => spawn(cmd, [file], process.stdin, process.stdout))
 			.then(() => readFile(file))
