@@ -1,7 +1,7 @@
 {
 	"name":         "sms-cli",
 	"description":  "Read & write SMS from the command line.",
-	"version":      "0.1.1",
+	"version":      "0.1.2",
 	"main":         "index.js",
 	"files":        ["index.js", "ui.js", "util.js", "bin.js"],
 	"bin":          {"sms": "./bin.js"},
@@ -29,6 +29,6 @@
 		"trim-newlines": "^1.0.0",
 		"twilio": "^2.11.1",
 		"window-size": "^0.3.0",
-		"yargs": "^6.6.0"
+		"yargs": "^7.0.2"
 	}
 }
