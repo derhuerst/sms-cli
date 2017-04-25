@@ -1,6 +1,6 @@
 # *sms-cli* ⏱
 
-**Read & write SMS from the command line.**
+**Read & write SMS from the command line.** Uses [Twilio](https://twilio.com/) as SMS provider.
 
 [![npm version](https://img.shields.io/npm/v/sms-cli.svg)](https://www.npmjs.com/package/sms-cli)
 [![dependency status](https://img.shields.io/david/derhuerst/sms-cli.svg)](https://david-dm.org/derhuerst/sms-cli)
@@ -17,7 +17,7 @@ npm install -g sms-cli
 
 ## Usage
 
-todo
+When you run `sms` for the first time, it will ask you for your Twilio credentials. You can also provide them via `TWILIO_SID` and `TWILIO_TOKEN` environment variables.
 
 
 ## Contributing

@@ -54,7 +54,7 @@ if (!conf.get('sid')) {
 }
 
 if (!conf.get('token')) {
-	if (process.env.TWILIO_TOKEN) conf.set('token', process.env.TWILIO_SID)
+	if (process.env.TWILIO_TOKEN) conf.set('token', process.env.TWILIO_TOKEN)
 	else chain.push(() =>
 		prompt(text, 'Please enter your Twilio token.')
 		.then((token) => {
