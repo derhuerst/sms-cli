@@ -1,10 +1,10 @@
 'use strict'
 
-const twilio = require('twilio')
+const Twilio = require('twilio')
 const trim = require('trim-newlines')
 
 const sms = (sid, token) => {
-	const client = twilio(sid, token)
+	const client = new Twilio(sid, token)
 	return {
 		  numbers: () =>
 			client.incomingPhoneNumbers.list().then((data) =>
@@ -16,11 +16,11 @@ const sms = (sid, token) => {
 			)
 
 		, send: (from, to, text) =>
-			client.sms.messages.post({from, to, body: text})
+			client.messages.create({from, to, body: text})
 			.then((message) => message.sid)
 
 		, list: () =>
-			client.sms.messages.list().then((data) =>
+			client.messages.list().then((data) =>
 				data.smsMessages.map((message) => ({
 					id: message.sid,
 					when: message.dateSent,
