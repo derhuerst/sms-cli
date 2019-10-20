@@ -21,7 +21,6 @@
 		"cli-table2": "^0.2.0",
 		"conf": "^6.1.0",
 		"figures": "^3.0.0",
-		"p-pipe": "^3.0.0",
 		"prompt-skeleton": "^1.0.2",
 		"select-prompt": "^0.3.1",
 		"text-prompt": "^0.1.1",

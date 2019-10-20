@@ -6,34 +6,38 @@ const trim = require('trim-newlines')
 const sms = (sid, token) => {
 	const client = new Twilio(sid, token)
 	return {
-		  numbers: () =>
-			client.incomingPhoneNumbers.list().then((data) =>
-				data.incomingPhoneNumbers.map((number) => ({
-					id: number.sid,
-					name: number.friendlyName,
-					nr: number.phoneNumber,
-				}))
-			)
+		numbers: async () => {
+			const res = await client.incomingPhoneNumbers.list()
+			return res.incomingPhoneNumbers.map((number) => ({
+				id: number.sid,
+				name: number.friendlyName,
+				nr: number.phoneNumber,
+			}))
+		},
 
-		, send: (from, to, text) =>
-			client.messages.create({from, to, body: text})
-			.then((message) => message.sid)
+		send: async (from, to, text) => {
+			const msg = await client.messages.create({
+				from, to, body: text
+			})
+			return message.sid
+		},
 
-		, list: () =>
-			client.messages.list().then((data) =>
-				data.smsMessages.map((message) => ({
-					id: message.sid,
-					when: message.dateSent,
-					from: message.from,
-					to: message.to,
-					text: trim(message.body),
-					inbound: message.direction.slice(0, 7) === 'inbound',
-					outbound: message.direction.slice(0, 8) === 'outbound'
-				}))
-			)
+		list: async () => {
+			const res = await client.messages.list()
+			return res.smsMessages.map((message) => ({
+				id: message.sid,
+				when: message.dateSent,
+				from: message.from,
+				to: message.to,
+				text: trim(message.body),
+				inbound: message.direction.slice(0, 7) === 'inbound',
+				outbound: message.direction.slice(0, 8) === 'outbound'
+			}))
+		},
 
-		, delete: (id) =>
-			client.messages(id).delete()
+		delete: async (id) => {
+			await client.messages(id).delete()
+		}
 	}
 }
 
